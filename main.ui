@@ -1,0 +1,163 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.3">
+  <object class="tk.Toplevel" id="toplevel_1">
+    <property name="background">#c0c0c0</property>
+    <property name="geometry">500x600</property>
+    <property name="height">200</property>
+    <property name="width">200</property>
+    <child>
+      <object class="ttk.Frame" id="frame_1">
+        <property name="height">588</property>
+        <property name="width">488</property>
+        <layout manager="grid">
+          <property name="column">0</property>
+          <property name="padx">6</property>
+          <property name="pady">6</property>
+          <property name="row">0</property>
+          <property name="sticky">nsew</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="label_2">
+            <property name="anchor">center</property>
+            <property name="background">#008040</property>
+            <property name="font">{游ゴシック} 12 {}</property>
+            <property name="justify">center</property>
+            <property name="relief">ridge</property>
+            <property name="text" translatable="yes">Poke-Controller 環境構築</property>
+            <layout manager="place">
+              <property name="anchor">nw</property>
+              <property name="relheight">0.1</property>
+              <property name="relwidth">0.8</property>
+              <property name="relx">0.1</property>
+              <property name="rely">0.05</property>
+              <property name="x">0</property>
+              <property name="y">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="label_3">
+            <property name="anchor">center</property>
+            <property name="background">#008040</property>
+            <property name="font">{游ゴシック} 12 {}</property>
+            <property name="justify">center</property>
+            <property name="relief">ridge</property>
+            <property name="text" translatable="yes">Path</property>
+            <layout manager="place">
+              <property name="anchor">nw</property>
+              <property name="relheight">0.1</property>
+              <property name="relwidth">0.3</property>
+              <property name="relx">0.1</property>
+              <property name="rely">0.2</property>
+              <property name="x">0</property>
+              <property name="y">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="label_4">
+            <property name="anchor">center</property>
+            <property name="background">#008040</property>
+            <property name="font">{游ゴシック} 12 {}</property>
+            <property name="justify">center</property>
+            <property name="relief">ridge</property>
+            <property name="text" translatable="yes">PokeCon</property>
+            <layout manager="place">
+              <property name="anchor">nw</property>
+              <property name="relheight">0.1</property>
+              <property name="relwidth">0.3</property>
+              <property name="relx">0.1</property>
+              <property name="rely">0.35</property>
+              <property name="x">0</property>
+              <property name="y">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="label_5">
+            <property name="anchor">center</property>
+            <property name="background">#008040</property>
+            <property name="font">{游ゴシック} 12 {}</property>
+            <property name="justify">center</property>
+            <property name="relief">ridge</property>
+            <property name="text" translatable="yes">Python Ver</property>
+            <layout manager="place">
+              <property name="anchor">nw</property>
+              <property name="relheight">0.1</property>
+              <property name="relwidth">0.3</property>
+              <property name="relx">0.1</property>
+              <property name="rely">0.5</property>
+              <property name="x">0</property>
+              <property name="y">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Combobox" id="combobox_select_path" named="True">
+            <property name="justify">center</property>
+            <property name="state">readonly</property>
+            <property name="textvariable">string:install_folder_path</property>
+            <property name="values">"" "参照"</property>
+            <layout manager="place">
+              <property name="anchor">nw</property>
+              <property name="relheight">0.1</property>
+              <property name="relwidth">0.5</property>
+              <property name="relx">0.4</property>
+              <property name="rely">0.2</property>
+              <property name="x">0</property>
+              <property name="y">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Combobox" id="combobox_select_pokecon_ver" named="True">
+            <property name="justify">center</property>
+            <property name="state">readonly</property>
+            <property name="textvariable">string:select_pokecon_ver</property>
+            <property name="values">"Poke-Controller
+" "Poke-Controller-Modified
+" "Poke-Controller-Modified-Extension"</property>
+            <layout manager="place">
+              <property name="anchor">nw</property>
+              <property name="relheight">0.1</property>
+              <property name="relwidth">0.5</property>
+              <property name="relx">0.4</property>
+              <property name="rely">0.35</property>
+              <property name="x">0</property>
+              <property name="y">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Combobox" id="combobox_install_python_ver" named="True">
+            <property name="state">disabled</property>
+            <property name="textvariable">string:install_python_ver</property>
+            <layout manager="place">
+              <property name="anchor">nw</property>
+              <property name="relheight">0.1</property>
+              <property name="relwidth">0.5</property>
+              <property name="relx">0.4</property>
+              <property name="rely">0.5</property>
+              <property name="x">0</property>
+              <property name="y">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="button_1">
+            <property name="text" translatable="yes">インストール開始</property>
+            <layout manager="place">
+              <property name="anchor">nw</property>
+              <property name="relheight">0.1</property>
+              <property name="relwidth">0.8</property>
+              <property name="relx">0.1</property>
+              <property name="rely">0.85</property>
+              <property name="x">0</property>
+              <property name="y">0</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
