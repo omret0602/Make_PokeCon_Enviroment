@@ -5,31 +5,18 @@ import tkinter.ttk as ttk
 from tkinter import messagebox, filedialog
 from pathlib import Path
 from loguru import logger
-
-# FOLDER_PATH = Path("download")
-# PYTHON_VER = "3.11"
-# PYTHON_URL = "https://www.python.org/ftp/python/3.11.6/python-3.11.6-amd64.exe"
-# # PYTHON_FILE_NAME = f"python{PYTHON_VER}.exe"
-# PYTHON_LIBRARIES = ["opencv-python","pynput","pyserial","Pillow","pythonnet","pygubu","requests","pandas","numpy","scipy","packaging","customtkinter","loguru","pygame"]
-# GIT_URL = "https://github.com/git-for-windows/git/releases/download/v2.31.1.windows.1/Git-2.31.1-64-bit.exe"
-# GIT_FILE_NAME = "Git-2.31.1-64-bit.exe"
-# GIT_POKECON = "https://github.com/Moi-poke/Poke-Controller-Modified.git"
-# POKECON_PATH = Path("C:\PokeCon9999")
-# POKECON_NAME = "Poke-Controller-Modified"
-	
+import git
 
 class MainApp:
 	def __init__(self, master=None):
 		self._logger = logger
 
 		self.pokecon_version_list =  ["Poke-Controller", "Poke-Controller-Modified", "Poke-Controller-Modified-Extension"]
-		self.python_version_list = ["3.7","3.11","3.7"]
+		self.python_version_list = ["3.7","3.10","3.7"]
 		self.python_url_list = ["https://www.python.org/ftp/python/3.7.9/python-3.7.9-amd64.exe",
 						  		"https://www.python.org/ftp/python/3.10.11/python-3.10.11-amd64.exe",	
 								"https://www.python.org/ftp/python/3.7.9/python-3.7.9-amd64.exe"
-								]
-		self.git_url = "https://github.com/git-for-windows/git/releases/download/v2.31.1.windows.1/Git-2.31.1-64-bit.exe"
-		
+								]		
 		self.git_pokecon_list = ["https://github.com/KawaSwitch/Poke-Controller.git",
 						   		 "https://github.com/Moi-poke/Poke-Controller-Modified.git",
 								 "https://github.com/futo030/Poke-Controller-Modified-Extension.git"
@@ -44,20 +31,13 @@ class MainApp:
 									  "pandas",
 									  "numpy",
 									  "scipy",
-									  "packaging",
-									  "customtkinter",
-									  "loguru",
-									  "pygame"]
-		
-		self.git_name = "Git-2.31.1-64-bit.exe"
-
+									  ]
 		self.root = tk.Tk()
 		self.root.withdraw()
-		# self.load_settings()
-
 		toplevel_1 = tk.Toplevel(self.root)
 		toplevel_1.configure(background="#c0c0c0", height=200, width=200)
 		toplevel_1.geometry("500x600")
+		toplevel_1.title("Make-PokeCon-Enviroment")
 		frame_1 = ttk.Frame(toplevel_1)
 		frame_1.configure(height=588, width=488)
 		label_2 = ttk.Label(frame_1)
@@ -98,99 +78,126 @@ class MainApp:
 		self.combobox_select_path.bind("<<ComboboxSelected>>",self.select_folder)
 		self.combobox_select_pokecon_ver.bind("<<ComboboxSelected>>",self.select_pokecon)
 
-	def select_folder(self,event):
-		if self.install_folder_path.get() == "参照":
+	def select_folder(self,event=None):
+		folder_path = self.install_folder_path.get()
+		if folder_path == "参照":
 			path_name = filedialog.askdirectory(title="ポケコンをインストールするフォルダーを指定してください。")
-			self.install_folder_path.set(path_name)
 			path_name = Path(path_name)
 			if not path_name.is_absolute():
 				messagebox.showerror("","フォルダーが正しく選択されていません。")
 			else:
-				# self.install_folder_path = path_name
+				self.install_folder_path.set(str(path_name))
 				return
+		else:
+			return
 			
 	def select_pokecon(self,event):
-		self._logger.info("test")
+		# self._logger.info("test")
 		pokecon_name = self.select_pokecon_ver.get()
 		list_idx = self.pokecon_version_list.index(pokecon_name)
 		self.install_python_ver.set(self.python_version_list[list_idx])
 
 	def start_install(self):
 		pokecon_ver = self.select_pokecon_ver.get()
-		if pokecon_ver in self.pokecon_version_list:
-			idx  = self.pokecon_version_list.index(pokecon_ver)
+		idx  = self.pokecon_version_list.index(pokecon_ver)
 		python_url = self.python_url_list.pop(idx)
 		pokecon_git = self.git_pokecon_list.pop(idx)
-		self.convert_path()
-		self.download_files(python_url)
-		self.install_libralies()
+		python_exe_name = self.convert_path()
+		self.download_files(python_url,python_exe_name)
+		venv_path = self.create_venv()
 		self.make_pokecon(pokecon_git)
-		self._logger.info("finish")
-		self.closing()
-
-
+		self.install_libralies(venv_path)
 
 	def convert_path(self):
 		folder_path = Path(self.install_folder_path.get())
 		py_name = f"python{self.install_python_ver.get()}.exe"
-		self.install_folder = folder_path.joinpath("download")
-		# self.install_pokecon_folder = folder_path.joinpath(self.select_pokecon_ver.get())
-		if not self.install_folder.exists():
-			self.install_folder.mkdir(parents=True)
-		self.python_exe_name = folder_path.joinpath("download",py_name)
-		self.git_exe_name = folder_path.joinpath("download",self.git_name)
+		folder_path.joinpath("download").mkdir(parents=True)
+		python_exe_name = folder_path.joinpath("download",py_name)
+		return python_exe_name
 
-
-
-	def download_files(self,python_url):
-		self._logger.info("download files")
+	def download_files(self,python_url, python_exe_name):
+		self._logger.info("Download Python")
 		py_res = requests.get(python_url)
 		if py_res.status_code == 200:
-			with open(str(self.python_exe_name),"wb")as file:
+			with open(str(python_exe_name),"wb")as file:
 				file.write(py_res.content)
 		else:
 			pass
-		git_res = requests.get(self.git_url)
-		if git_res.status_code == 200:
-			with open(str(self.git_exe_name),"wb")as file:
-				file.write(git_res.content)
-		python_args = [str(self.python_exe_name),"/quiet","InstallAllUsers=1","PrependPath=1","Include_test=0"]
-		git_args = [str(self.git_exe_name),"/VERYSILENT","/NORESTART","/NOCANCEL","/SP-","/CLOSEAPPLICATIONS","/RESTARTAPPLICATIONS","/COMPONENTS=icons,ext\reg\shellhere,assoc,assoc_sh"]
 		self._logger.info("Start Install Python")
+		python_args = [str(python_exe_name),"/quiet","InstallAllUsers=1","PrependPath=1","Include_test=0"]
 		subprocess.run(python_args,shell=True)
-		self._logger.info("Start Install GIT")
-		subprocess.run(git_args,shell=True)
+		self._logger.info("Python Install Successfully")
 
-	def install_libralies(self):
-		self._logger.info("start install libraries")
-		subprocess.run(["py",f"-{self.install_python_ver.get()}","-m","pip","install","--upgrade","setuptools"],shell=True)
-		subprocess.run(["py",f"-{self.install_python_ver.get()}","-m","pip","install","--upgrade","pip","--user"],shell=True)
-		for name in self.install_libralie_list:
-			subprocess.run(["py",f"-{self.install_python_ver.get()}","-m","pip","install",name,"--user"],shell=True)
-		self._logger.info("installed librariles")
+	def create_venv(self):
+		self._logger.info("Create Virtual Enviroment")
+		venv_path = Path(self.install_folder_path.get()).joinpath("venv")
+		# venv.create(str(venv_path), with_pip=True)
+		subprocess.run(["python","-m","venv","venv"],cwd=self.install_folder_path.get())
+		self._logger.info("Virtual Enviroment Construction Complete")
+		return venv_path
+
+	def install_libralies(self,venv_path):
+		self._logger.info("Start Install Library")
+		pokecon_ver = self.select_pokecon_ver.get()
+		res, library = self.install_libralies_module(pokecon_ver)
+		venv_path = Path(venv_path) 
+		venv_python = venv_path.joinpath("Scripts","python")
+		subprocess.run([str(venv_python),"-m","pip","install","--upgrade","setuptools"],shell=True)
+		subprocess.run([str(venv_python),"-m","pip","install","--upgrade","pip"],shell=True)
+		if not res:
+			for name in library:
+				subprocess.run([str(venv_python),"-m","pip","install",name],shell=True)
+		else:
+			subprocess.run([str(venv_python),"-m","pip","install","-r", library],shell=True)
+		self._logger.info("Install Library Complete")
+		self._logger.info("Install Successfully")
+		res = messagebox.askyesno("Install Successfully","インストールが完了しました。\n終了しますか？")
+		if res:
+			self.mainwindow.destroy()
+			self.root.destroy()
+			subprocess.run("pause",shell=True)
+		else:
+			return
+
+	def install_libralies_module(self,pokecon_ver):		
+		if pokecon_ver == "Poke-Controller":
+			library_list = self.install_libralie_list
+			return False, library_list
+		else:
+			try:
+				pokecon_folder_path = Path(self.install_folder_path.get())
+				folder_list = [folder.name for folder in pokecon_folder_path.iterdir() if folder.is_dir()]
+				delete_folder_name_list = ["venv","download"]
+				for name in delete_folder_name_list:
+					folder_list.remove(name)
+				requirements_txt = pokecon_folder_path.joinpath(folder_list[0],"requirements.txt")
+				self._logger.info("requirements.txt GET")
+				return True, requirements_txt
+			except:
+				_, _ = self.install_libralies_module("Poke-Controller")
+
 
 	def make_pokecon(self,pokecon_git):
-		self._logger.info("make pokecon modified")
-		subprocess.run(["git","clone","--recursive",str(pokecon_git)],cwd=self.install_folder_path.get(),shell=True)
-		subprocess.run(["git","pull","origin","master"],cwd=self.install_folder_path.get(),shell=True)
-		self._logger.info("installed PokeCon Modified")
-
-
-
-	def run(self):
-		self.mainwindow.mainloop()
+		self._logger.info(f"Start Install {self.select_pokecon_ver.get()}")
+		pokecon_folder_path = Path(self.install_folder_path.get()).joinpath(self.select_pokecon_ver.get())
+		pokecon_folder_path.mkdir(parents=True)
+		git.Repo.clone_from(pokecon_git,pokecon_folder_path,branch="master")
+		
 
 	def closing(self):
 		res = messagebox.askyesno("終了確認","終了しますか？")
 		if res:
-			self._logger.info("インストールを終了しました。")
 			self.mainwindow.destroy()
 			self.root.destroy()
+			self._logger.info("インストールをキャンセルしました。")
+			subprocess.run("pause",shell=True)
 		else:
 			return
+		
+	def run(self):
+		self.mainwindow.mainloop()
 
 
 if __name__ == "__main__":
-	# BuildingEnvironment()
 	app = MainApp()
 	app.run()
