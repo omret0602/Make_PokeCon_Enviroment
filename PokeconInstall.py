@@ -68,9 +68,9 @@ class MainApp:
 		self.combobox_install_python_ver.configure(state="disabled", textvariable=self.install_python_ver,values=self.python_version_list)
 		self.combobox_install_python_ver.place(anchor="nw", relheight=0.1, relwidth=0.5, relx=0.4, rely=0.5, x=0, y=0)
 		
-		button_1 = ttk.Button(frame_1)
-		button_1.configure(text='インストール開始',command=self.start_install)
-		button_1.place(anchor="nw",relheight=0.1,relwidth=0.8,relx=0.1,rely=0.85,x=0,y=0)
+		self.button_install = ttk.Button(frame_1)
+		self.button_install.configure(text='インストール開始',command=self.start_install)
+		self.button_install.place(anchor="nw",relheight=0.1,relwidth=0.8,relx=0.1,rely=0.85,x=0,y=0)
 		frame_1.grid(column=0, padx=6, pady=6, row=0, sticky="nsew")
 		# Main widget
 		self.mainwindow = toplevel_1
@@ -92,21 +92,27 @@ class MainApp:
 			return
 			
 	def select_pokecon(self,event):
-		# self._logger.info("test")
 		pokecon_name = self.select_pokecon_ver.get()
 		list_idx = self.pokecon_version_list.index(pokecon_name)
 		self.install_python_ver.set(self.python_version_list[list_idx])
 
 	def start_install(self):
-		pokecon_ver = self.select_pokecon_ver.get()
-		idx  = self.pokecon_version_list.index(pokecon_ver)
-		python_url = self.python_url_list.pop(idx)
-		pokecon_git = self.git_pokecon_list.pop(idx)
-		python_exe_name = self.convert_path()
-		self.download_files(python_url,python_exe_name)
-		venv_path = self.create_venv()
-		self.make_pokecon(pokecon_git)
-		self.install_libralies(venv_path)
+		try:
+			self.button_install.configure(state="disabled")
+			pokecon_ver = self.select_pokecon_ver.get()
+			idx  = self.pokecon_version_list.index(pokecon_ver)
+			python_url = self.python_url_list.pop(idx)
+			pokecon_git = self.git_pokecon_list.pop(idx)
+			python_exe_name = self.convert_path()
+			self.download_files(python_url,python_exe_name)
+			venv_path = self.create_venv()
+			self.make_pokecon(pokecon_git)
+			self.install_libralies(venv_path)
+		except:
+			messagebox.showerror("Install Error","インストールに失敗しました。")
+			return
+		finally:
+			self.button_install.configure(state="enabled")
 
 	def convert_path(self):
 		folder_path = Path(self.install_folder_path.get())
@@ -150,6 +156,7 @@ class MainApp:
 		else:
 			subprocess.run([str(venv_python),"-m","pip","install","-r", library],shell=True)
 		self._logger.info("Install Library Complete")
+		self.download_start_exe()
 		self._logger.info("Install Successfully")
 		res = messagebox.askyesno("Install Successfully","インストールが完了しました。\n終了しますか？")
 		if res:
@@ -182,6 +189,19 @@ class MainApp:
 		pokecon_folder_path = Path(self.install_folder_path.get()).joinpath(self.select_pokecon_ver.get())
 		pokecon_folder_path.mkdir(parents=True)
 		git.Repo.clone_from(pokecon_git,pokecon_folder_path,branch="master")
+
+	def download_start_exe(self):
+		start_exe_url = "https://github.com/omret0602/Start_PokeCon/releases/download/v0.1a/Start_PokeCon.exe"
+		exe_url = requests.get(start_exe_url)
+		file_path = Path(self.install_folder_path.get()).joinpath("Start_PokeCon.exe")
+		
+		if exe_url.status_code == 200:
+			with open(str(file_path),"wb")as file:
+				file.write(exe_url.content)
+		else:
+			pass
+
+
 		
 
 	def closing(self):
