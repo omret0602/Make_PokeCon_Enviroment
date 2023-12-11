@@ -130,7 +130,7 @@ class MainApp:
 		else:
 			pass
 		self._logger.info("Start Install Python")
-		python_args = [str(python_exe_name),"/quiet","InstallAllUsers=1","PrependPath=1","Include_test=0"]
+		python_args = [str(python_exe_name),"/quiet","Include_test=0"]
 		subprocess.run(python_args,shell=True)
 		self._logger.info("Python Install Successfully")
 
@@ -161,8 +161,8 @@ class MainApp:
 		res = messagebox.askyesno("Install Successfully","インストールが完了しました。\n終了しますか？")
 		if res:
 			self.mainwindow.destroy()
-			self.root.destroy()
 			subprocess.run("pause",shell=True)
+			self.root.destroy()
 		else:
 			return
 
@@ -201,16 +201,13 @@ class MainApp:
 		else:
 			pass
 
-
-		
-
 	def closing(self):
 		res = messagebox.askyesno("終了確認","終了しますか？")
 		if res:
 			self.mainwindow.destroy()
-			self.root.destroy()
 			self._logger.info("インストールをキャンセルしました。")
 			subprocess.run("pause",shell=True)
+			self.root.destroy()
 		else:
 			return
 		
