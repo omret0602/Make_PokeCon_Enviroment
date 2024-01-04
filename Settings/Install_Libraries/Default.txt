@@ -1,0 +1,17 @@
+opencv-python
+pynput
+pyserial
+Pillow
+pythonnet
+packaging
+pykakasi
+pygubu
+requests
+pandas
+numpy
+customtkinter
+pygame
+imagehash
+loguru
+scipy
+gitpython
