@@ -9,6 +9,7 @@ import platform
 import os
 import tarfile
 import shutil
+import threading
 
 
 log_folder = Path("./Log")
@@ -17,7 +18,6 @@ logger.add(log_path,rotation="1 day",level="INFO")
 
 class MainApp:
 	def __init__(self, master=None):
-
 		self._logger = logger
 		try:
 			self.root = tk.Tk()
@@ -40,26 +40,25 @@ class MainApp:
 			label_5 = ttk.Label(frame_1)
 			label_5.configure(anchor="center",background="#008040",font="{游ゴシック} 12 {}",justify="center",relief="ridge",text='Python Ver')
 			label_5.place(anchor="nw",relheight=0.1,relwidth=0.3,relx=0.1,rely=0.5,x=0,y=0)
-			
+
 			self.combobox_select_path = ttk.Combobox(frame_1)
 			self.install_folder_path = tk.StringVar()
-			self.combobox_select_path.configure(justify="center",state="readonly",textvariable=self.install_folder_path,values='"" "参照"')
+			self.combobox_select_path.configure(justify="center",state="readonly",textvariable=self.install_folder_path,values=["参照(Cドライブ直下推奨)"])
 			self.combobox_select_path.place(anchor="nw",relheight=0.1,relwidth=0.5,relx=0.4,rely=0.2,x=0,y=0)
-			
+
 			self.combobox_select_pokecon_ver = ttk.Combobox(frame_1)
 			self.select_pokecon_ver = tk.StringVar()
 			self.combobox_select_pokecon_ver.configure(justify="center",state="readonly",textvariable=self.select_pokecon_ver)
 			self.combobox_select_pokecon_ver.place(anchor="nw", relheight=0.1, relwidth=0.5, relx=0.4, rely=0.35, x=0, y=0)
-			
+
 			self.combobox_install_python_ver = ttk.Combobox(frame_1)
 			self.install_python_ver = tk.StringVar()
 			self.combobox_install_python_ver.configure(justify="center",state="readonly", textvariable=self.install_python_ver)
 			self.combobox_install_python_ver.option_add("*TCombobox*Listbox.Font", ("{游ゴシック} 12 {}"))
 			self.combobox_install_python_ver.place(anchor="nw", relheight=0.1, relwidth=0.5, relx=0.4, rely=0.5, x=0, y=0)
-			
-		
+
 			self.button_install = ttk.Button(frame_1)
-			self.button_install.configure(text='インストール開始',state="disabled",command=self.main)
+			self.button_install.configure(text='インストール開始',state="disabled",command=self.main_start)
 			self.button_install.place(anchor="nw",relheight=0.1,relwidth=0.8,relx=0.1,rely=0.85,x=0,y=0)
 			frame_1.grid(column=0, padx=6, pady=6, row=0, sticky="nsew")
 			# Main widget
@@ -74,21 +73,21 @@ class MainApp:
 			self._logger.exception(e)
 			subprocess.run("pause",shell=True)
 
-
+	def main_start(self):
+		self.button_install.configure(state="disabled")
+		# process = multiprocessing.Process(target=self.main)
+		# process.start()
+		process = threading.Thread(target=self.main)
+		process.start()
+		# process.join()
 
 	def load_settings(self):
 		try:
 			current_file_path = Path(".").parent
-			
+
 			# Setting Path
 			self.setting_path_name = current_file_path.joinpath("Settings")
-			# Default Path Set
-			default_path_file = self.setting_path_name.joinpath("Install_Default_Path.txt")
-			self._logger.info("Get Install Default Path")
-			with open(default_path_file,'r',encoding='utf-8') as file:
-				install_path = file.read()
-			self.install_folder_path.set(install_path)
-			self.python_folder_path = self.setting_path_name.joinpath("Python_Versions")
+			python_folder_path = self.setting_path_name.joinpath("Python_Versions")
 
 			# Confirm Platform
 			self.system_name = platform.system()
@@ -97,24 +96,24 @@ class MainApp:
 			try:
 				# Windows
 				if self.system_name == "Windows":
-					self.system_path = self.python_folder_path.joinpath("Windows")
+					self.system_path = python_folder_path.joinpath("Windows")
 					not_ext_python_txt_names = [f.stem for f in Path(self.system_path).glob('*') if f.is_file()]
 					self.combobox_install_python_ver["values"] = not_ext_python_txt_names
 				# Mac
 				elif self.system_name == "Darwin":
-					self.system_path = self.python_folder_path.joinpath("Darwin")
+					self.system_path = python_folder_path.joinpath("Darwin")
 					not_ext_python_txt_names = [f.stem for f in Path(self.system_path).glob('*') if f.is_file()]
 					self.combobox_install_python_ver["values"] = not_ext_python_txt_names
 				# Linux
 				elif self.system_name == "Linux":
-					self.system_path = self.python_folder_path.joinpath("Linux")
+					self.system_path = python_folder_path.joinpath("Linux")
 					not_ext_python_txt_names = [f.stem for f in Path(self.system_path).glob('*') if f.is_file()]
 					self.combobox_install_python_ver["values"] = not_ext_python_txt_names
 				# Not an installable operating system.
 				else:
 					self._logger.error("Not an installable operating system.")
 					return
-				
+
 			except Exception as e:
 				self._logger.exception(e)
 				return
@@ -127,15 +126,16 @@ class MainApp:
 			except Exception as e:
 				self._logger.exception(e)
 				return
-			
+
 		except Exception as e:
 			self._logger.exception(e)
 			return
-		
+
 	def select_folder(self, event=None):
-		if self.install_folder_path.get() == "参照":
+		self.button_install.configure(state="disabled")
+		if self.install_folder_path.get() == "参照(Cドライブ直下推奨)":
 			self.install_folder_path.set("")
-			install_folder_path = filedialog.askdirectory(title="PokeConをインストールする空のフォルダーを選択してください。")
+			install_folder_path = filedialog.askdirectory(title="PokeConをインストールする空のフォルダーを選択してください。(日本語が含まれているフォルダー名非推奨)")
 			if install_folder_path == "":
 				messagebox.showerror("フォルダー選択エラー","インストール先フォルダーが選択されませんでした。")
 				return
@@ -156,6 +156,8 @@ class MainApp:
 		try:
 			self.button_install.configure(state="disabled")
 			install_folder_path = Path(self.install_folder_path.get())
+			if install_folder_path.exists():
+				install_folder_path.mkdir(parents=True,exist_ok=True)
 			install_pokecon_version = self.select_pokecon_ver.get()
 			install_python_ver = self.install_python_ver.get()
 			self._logger.info("Get Python Build Standalone URL")
@@ -178,7 +180,7 @@ class MainApp:
 			else:
 				self._logger.error("Download ERROR")
 				return
-			self._logger.info("Expand File")
+			self._logger.info("Extracting File")
 			with tarfile.open(python_file_name, 'r:gz') as tar:
 				tar.extractall(path=install_folder_path)
 
@@ -187,17 +189,16 @@ class MainApp:
 			if not res_git:
 				self.closing()
 				return
-			
-			
+
 			self._logger.info("Start installation of the library in a stand-alone environment")
 			lib_res = self.install_libraries(install_folder_path)
 			if not lib_res:
 				self._logger.error("An error occurred while performing library installation in a standalone environment.")
 				return
-			
+
 			shutil.rmtree(download_folder)
 			self.make_start_bat(install_folder_path,install_pokecon_version)
-			
+
 			self._logger.info("The environment has been built.")
 			messagebox.showinfo("インストール完了","PokeConの環境構築が完了しました。")
 			if messagebox.askyesno("終了確認","終了しますか？"):
@@ -208,6 +209,7 @@ class MainApp:
 				return
 			else:
 				return
+
 		except Exception as e:
 			self._logger.exception(e)
 			return
@@ -216,10 +218,9 @@ class MainApp:
 		with open(path,"r",encoding="utf-8") as file:
 			text = file.read()
 		return text
-		
 
 	def install_git(self,install_folder_path:Path,install_pokecon_version):
-		if self.system_name == "Windows":	
+		if self.system_name == "Windows":
 			git_url_file_path = self.setting_path_name.joinpath("Install_Git_For_Windows.txt")
 			git_dornload_file_path = install_folder_path.joinpath("download","git_for_windows.exe")
 			with open(git_url_file_path,"r",encoding="utf-8") as file:
@@ -239,14 +240,11 @@ class MainApp:
 				pokecon_txt_file_path = self.setting_path_name.joinpath("PokeCon_Versions").joinpath(f"{install_pokecon_version}.txt")
 				pokecon_git = self.read_txt_file(pokecon_txt_file_path)
 				self._logger.info(f"Clone {install_pokecon_version}")
-				# pokecon_folder_path = install_folder_path.joinpath(install_pokecon_version)
-				# pokecon_folder_path.mkdir(parents=True)
 				self._logger.info("Get Branch Name")
-				branch_file_path = self.setting_path_name.joinpath("Default_Branch.txt")
+				branch_file_path = self.setting_path_name.joinpath("Branch_Name.txt")
 				branch_name = self.read_txt_file(branch_file_path)
 				self._logger.info("Clone Poke-controller from Git.")
 				subprocess.run(["git","clone","--recursive","-b",branch_name,pokecon_git],cwd=install_folder_path,shell=True)
-				# subprocess.run(["git","pull","origin",branch_name],cwd=pokecon_folder_path,shell=True)
 				self._logger.info("Poke-controller cloning is complete.")
 				return True
 			else:
@@ -268,26 +266,15 @@ class MainApp:
 
 			self._logger.info("Start the installation of the library")
 			if self.system_name == "Windows":
-				# full_venv_python_path = base_venv_path.joinpath("Scripts","python.exe") 
-				subprocess.run([base_python_path,"-m","pip","install","--upgrade","pip"],cwd=folder_path.parent,shell=True)
+				subprocess.run([base_python_path,"-m","pip.exe","install","--upgrade","pip"],cwd=folder_path.parent,shell=True)
 				subprocess.run([base_python_path,"-m","pip","install","--upgrade","setuptools"],cwd=folder_path.parent,shell=True)
-
 				for lib in library_list:
 					subprocess.run([base_python_path,"-m","pip","install",f"{lib}","-t",str(site_package_path)],cwd=folder_path.parent,shell=True)
 				return True
 
-			# else:
-			# 	full_venv_python_path = base_venv_path.joinpath("bin","python")
-			# 	subprocess.run(f"{full_venv_python_path} -m pip install --upgrade pip",cwd=folder_path.parent,shell=True)
-			# 	subprocess.run(f"{full_venv_python_path} -m pip install --upgrade setuptools",cwd=folder_path.parent,shell=True)
-			# 	for lib in library_list:
-			# 		subprocess.run(f"{full_venv_python_path} -m pip install {lib}",cwd=folder_path.parent,shell=True)
-			# 	return True
-			
 		except Exception as e:
 			self._logger.exception(e)
 			return False
-
 
 	def make_start_bat(self,install_folder_path:Path,install_pokecon_version):
 		try:
@@ -297,7 +284,7 @@ class MainApp:
 				ext_path = install_folder_path.joinpath("Poke-Controller-Modified-Extension")
 				updatechecker = SerialController_path.joinpath("PokeConUpdateChecker.py")
 				txt = f"cd {str(ext_path)}\n{str(python_path)} {str(updatechecker)}\ncd {str(SerialController_path)}\nrem python Window.py --profile dragonite\n{str(python_path)} Window.py\npause"
-				
+
 				with open(install_folder_path.joinpath("start.bat"),"w",encoding="utf-8") as file:
 					file.write(txt)
 			else:
@@ -308,9 +295,6 @@ class MainApp:
 		except Exception as e:
 			self._logger.exception(e)
 			return False
-		
-		
-
 
 	def input_check(self,event=None):
 		self._logger.info("Input Check")
@@ -321,19 +305,11 @@ class MainApp:
 			self.button_install.configure(state="enabled")
 			self._logger.info("Input Check OK")
 
-	
-		
-
-
-
-
-
 	def closing(self):
 		res = messagebox.askyesno("終了確認","終了しますか？")
 		if res:
 			self.mainwindow.destroy()
 			self._logger.info("Installation canceled.")
-			subprocess.run("pause",shell=True)
 			self.root.destroy()
 		else:
 			return
@@ -341,18 +317,15 @@ class MainApp:
 	def clear(self):
 		self.install_folder_path.set("")
 		self.select_pokecon_ver.set("")
-		self.install_python_ver.set("")	
+		self.install_python_ver.set("")
 		self.button_install.configure(state="disabled")
 
-	
-		
 	def run(self):
 		self.mainwindow.mainloop()
 
 
 if __name__ == "__main__":
 	logger.info("Start Make_PokeCon_Enviroment")
-
 	try:
 		app = MainApp()
 		app.run()
