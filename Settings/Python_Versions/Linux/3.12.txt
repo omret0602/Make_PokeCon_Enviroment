@@ -1,1 +1,0 @@
-https://github.com/indygreg/python-build-standalone/releases/download/20231002/cpython-3.12.0+20231002-aarch64-unknown-linux-gnu-install_only.tar.gz

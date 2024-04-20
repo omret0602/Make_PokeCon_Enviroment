@@ -1,1 +1,0 @@
-https://github.com/indygreg/python-build-standalone/releases/download/20231002/cpython-3.12.0+20231002-i686-pc-windows-msvc-shared-install_only.tar.gz
